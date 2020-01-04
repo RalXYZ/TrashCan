@@ -7,7 +7,6 @@
 #include <windows.h>
 #define LENGTH 40
 
-/*您可以自定义以下数值*/
 double timePerFrame;
 int numberOfRow = 12, numberOfColumn = 12;
 int pulse = 0; //控制豆豆oO
