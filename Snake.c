@@ -1,10 +1,51 @@
 #include <time.h>
 #include <math.h>
 #include <stdio.h>
-#include <conio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+
+/* for the sh*t, WIN32 */
+#ifdef _WIN32
 #include <windows.h>
+#include <conio.h>
+#else
+#include <tgmath.h>
+#include <unistd.h>
+#include <termios.h>
+#include <fcntl.h>
+
+// Windows 與 Linux 的函式庫名稱稍微不同。
+#define Sleep(msec) usleep(msec * 1000); // 不支援 s
+#define _getch() getc(stdin)
+
+// thanks to https://cboard.cprogramming.com/c-programming/63166-kbhit-linux.html
+int _kbhit(void)
+{
+    struct termios oldt, newt;
+    int ch;
+    int oldf;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+
+    ch = getchar();
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    fcntl(STDIN_FILENO, F_SETFL, oldf);
+
+    if(ch != EOF)
+    {
+        ungetc(ch, stdin);
+        return 1;
+    }
+
+    return 0;
+}
+#endif
+
 #define LENGTH 40
 
 double timePerFrame;
@@ -87,7 +128,11 @@ int main() {
         pulse = ++pulse % 2;
 
         /*统一输出*/
+#ifdef _WIN32
         system("cls");
+#else
+        printf("\x1b[2J");
+#endif
         for (int i = 0; i < numberOfRow + 2; i++)
             printf("%s", screen[i]);
         printf("Your current length is: %d\n", length);
@@ -114,7 +159,11 @@ int main() {
         screen[numberOfRow / 2 + 1][numberOfColumn] = 'I';
         screen[numberOfRow / 2 + 1][numberOfColumn + 1] = 'N';
     }
+#ifdef _WIN32
     system("cls");
+#else
+    printf("\x1b[2J");
+#endif
     for (int i = 0; i < numberOfRow + 2; i++)
         printf("%s", screen[i]);
     printf("Your final length is: %d\n", length);
@@ -162,11 +211,12 @@ char coreToScreen(int number, int length, int quaternaryVector) {
             }
     else if (number == 666)
         return '#';
-    else if (number == 777)
+    else if (number == 777) {
         if (pulse == 0)
             return 'o';
         else
             return 'O';
+    }
 }
 
 int keyToQuaternary(char input, int quaternaryVector, int length) {
