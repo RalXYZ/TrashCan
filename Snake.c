@@ -125,7 +125,9 @@ int main() {
         }
 
         /*辅助数据*/
-        pulse = ++pulse % 2;
+        // multiple unsequenced modifications to 'pulse'
+        pulse++;
+        pulse %= 2;
 
         /*统一输出*/
 #ifdef _WIN32
@@ -217,6 +219,7 @@ char coreToScreen(int number, int length, int quaternaryVector) {
         else
             return 'O';
     }
+    return '?'; // warning: control may reach end of non-void function
 }
 
 int keyToQuaternary(char input, int quaternaryVector, int length) {
