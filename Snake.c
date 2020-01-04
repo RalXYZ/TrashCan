@@ -1,16 +1,18 @@
 #include <time.h> 
+#include <math.h>
 #include <stdio.h>
 #include <conio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <windows.h>
 #define LENGTH 40
-#define SLEEPTIME 50
 
 /*您可以自定义以下数值*/
-int timePerFrame = 200;
-int numberOfRow = 10, numberOfColumn = 10;
+double timePerFrame;
+int numberOfRow = 12, numberOfColumn = 12;
+int pulse = 0; //控制豆豆oO
 
+double accelerate(int length);
 int keyToQuaternary(char input, int quaternaryVector, int length); //将用户键盘输入的值翻译为方向值
 void quaternaryVectorInterpreter(int quaternaryVector, int* currentRow, int* currentColumn); //将方向值与行列位置变化对应
 char coreToScreen(int number, int length, int quaternaryVector); //将core数组中存储的核心数据可视化
@@ -39,16 +41,6 @@ int main() {
 	}
 
 	while (true) {
-		/*随机放置贪吃蛇食物，循环直到食物不位于蛇身上为止*/
-		while (judgeSeed == false) {
-			int tempRow = rand() % numberOfRow + 1;
-			int tempColumn = rand() % numberOfColumn + 1;
-			if (core[tempRow][tempColumn] == 0) {
-				core[tempRow][tempColumn] = 777;
-				judgeSeed = true;
-			}
-		}
-
 		/*检测用户键盘输入，并由输入给出蛇头下一步移动的位置*/
 		if (_kbhit())
 			quaternaryVector = keyToQuaternary(_getch(), quaternaryVector, length);
@@ -73,6 +65,16 @@ int main() {
 		}
 		core[currentRow][currentColumn] = 1;
 
+		/*随机放置贪吃蛇食物，循环直到食物不位于蛇身上为止*/
+		while (judgeSeed == false) {
+			int tempRow = rand() % numberOfRow + 1;
+			int tempColumn = rand() % numberOfColumn + 1;
+			if (core[tempRow][tempColumn] == 0) {
+				core[tempRow][tempColumn] = 777;
+				judgeSeed = true;
+			}
+		}
+
 		/*将要输出的数据统一放至screen[][]*/
 		for (int i = 0; i < numberOfRow + 2; i++) {
 			for (int j = 0; j < numberOfColumn + 2; j++) {
@@ -82,11 +84,15 @@ int main() {
 			screen[i][2 * (numberOfColumn + 1) + 1] = '\n';
 		}
 
+		/*辅助数据*/
+		pulse = ++pulse % 2;
+
 		/*统一输出*/
 		system("cls");
 		for (int i = 0; i < numberOfRow + 2; i++)
 			printf("%s", screen[i]);
 		printf("Your current length is: %d\n", length);
+		timePerFrame = accelerate(length);
 		Sleep(timePerFrame);
 	}
 
@@ -101,7 +107,7 @@ int main() {
 		screen[numberOfRow / 2][numberOfColumn - 1] = 'Y'; screen[numberOfRow / 2][numberOfColumn] = 'O';
 		screen[numberOfRow / 2][numberOfColumn + 1] = 'U';
 		screen[numberOfRow / 2 + 1][numberOfColumn - 1] = 'W'; screen[numberOfRow / 2 + 1][numberOfColumn] = 'I';
-		screen[numberOfRow / 2 + 1][numberOfColumn + 1] = 'N';
+		screen[numberOfRow / 2 + 1][numberOfColumn + 1] = 'N'; 
 	}
 	system("cls");
 	for (int i = 0; i < numberOfRow + 2; i++)
@@ -109,6 +115,10 @@ int main() {
 	printf("Your final length is: %d\n", length);
 	Sleep(10000);
 	return 0;
+}
+
+double accelerate(int length) {
+	return (5.0 * exp(3.0 - 0.05 * length) + 100);
 }
 
 void quaternaryVectorInterpreter(int quaternaryVector, int* currentRow, int* currentColumn) {
@@ -123,22 +133,23 @@ void quaternaryVectorInterpreter(int quaternaryVector, int* currentRow, int* cur
 char coreToScreen(int number, int length, int quaternaryVector) {
 	if (number == 0)
 		return ' ';
-	else if (number <= length) {
+	else if (number <= length) 
 		if (number != 1)
 			return '*';
-		else {
+		else 
 			switch (quaternaryVector) { //不同方向的蛇头
 			case 0: return '>';
 			case 1: return 'A';
 			case 2: return '<';
 			case 3: return 'V';
 			}
-		}
-	}
 	else if (number == 666)
 		return '#';
 	else if (number == 777)
-		return 'o';
+		if (pulse == 0)
+			return 'o';
+		else
+			return 'O';
 }
 
 int keyToQuaternary(char input, int quaternaryVector, int length) {
